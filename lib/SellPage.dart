@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial_ble/flutter_bluetooth_serial_ble.dart';
 import 'package:http/http.dart' as http;
@@ -37,7 +37,7 @@ class _SellpageState extends State<Sellpage> {
   final olShopController = TextEditingController();
 
   String url_single = 'http://192.168.88.54:5000/api/item/item-sold/';
-  String url_bulk = 'http://192.168.1.15:5000/api/item/item-sold-bulk';
+  String url_bulk = 'http://192.168.88.58:5000/api/item/item-sold-bulk';
 
   @override
   void initState() {
@@ -140,6 +140,7 @@ class _SellpageState extends State<Sellpage> {
                 };
                 sendData(url_bulk, data);
                 clearController();
+                Tags.clear();
               },
               child: Text("Send data")
             ),
@@ -197,10 +198,30 @@ class _SellpageState extends State<Sellpage> {
       // Check the response status code
       if (response.statusCode >= 200 && response.statusCode <= 299) {
         print('Request successful');
-
         print('Response body: ${response.body}');
+
+        Fluttertoast.showToast(
+          msg: "Data sent successfully!",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
       } else {
         print('Request failed with status: ${response.statusCode}');
+        print('Response body: ${response.body}');
+
+        Fluttertoast.showToast(
+          msg: "Error ${response.statusCode} : ${response.body}",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
       }
     } catch (e) {
       print('Error occurred: $e');

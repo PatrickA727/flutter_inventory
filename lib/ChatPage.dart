@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial_ble/flutter_bluetooth_serial_ble.dart';
 import 'package:http/http.dart' as http;
@@ -46,7 +46,10 @@ class _ChatPage extends State<ChatPage> {
   final serialNumberController = TextEditingController();
   final itemNameController = TextEditingController();
   final priceController = TextEditingController();
-  String url = 'http://192.168.1.15:5000/api/item/register-item';
+  final quantityController = TextEditingController();
+  final batchController = TextEditingController();
+
+  String url = 'http://192.168.88.58:5000/api/item/register-item';
 
   @override
   void initState() {
@@ -101,96 +104,140 @@ class _ChatPage extends State<ChatPage> {
               : isConnected
                   ? Text('Connected with ' + serverName)
                   : Text('Disconnected with ' + serverName))),
-      body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            // Row(
-            //   mainAxisAlignment: MainAxisAlignment.center,
-            //   children: [Text("received QR: $msg")], // Display the msg variabl
-            // ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text("received RFID EPC: $epc_tag")
-              ], // Display the msg variabl
-            ),
-            SizedBox(
-              height: 15,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text("received SN: $qr_code")
-              ], // Display the msg variabl
-            ),
-
-            SizedBox(
-              height: 15.0,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: TextField(
-                controller: itemNameController,
-                decoration: InputDecoration(
-                    label: Text("Item Name"),
-                    border: OutlineInputBorder(),
-                    hintText: "Input Item Name",
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
-                    )),
+      body: SingleChildScrollView(
+        child: SafeArea(
+          child: Column(
+            children: <Widget>[
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [Text("received QR: $msg")], // Display the msg variabl
+              // ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("received RFID EPC: $epc_tag")
+                ], // Display the msg variabl
               ),
-            ),
-
-            SizedBox(
-              height: 15.0,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: TextField(
-                controller: priceController,
-                decoration: InputDecoration(
-                    label: Text("Price"),
-                    border: OutlineInputBorder(),
-                    hintText: "Input Price",
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
-                    )),
+              SizedBox(
+                height: 15,
               ),
-            ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("received SN: $qr_code")
+                ], // Display the msg variabl
+              ),
+        
+              SizedBox(
+                height: 15.0,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: TextField(
+                  controller: itemNameController,
+                  decoration: InputDecoration(
+                      label: Text("Item Name"),
+                      border: OutlineInputBorder(),
+                      hintText: "Input Item Name",
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                      )),
+                ),
+              ),
+        
+              SizedBox(
+                height: 15.0,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: TextField(
+                  controller: priceController,
+                  decoration: InputDecoration(
+                      label: Text("Price"),
+                      border: OutlineInputBorder(),
+                      hintText: "Input Price",
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                      )),
+                ),
+              ),
+        
+              SizedBox(
+                height: 15.0,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: TextField(
+                  controller: quantityController,
+                  decoration: InputDecoration(
+                      label: Text("Quantity"),
+                      border: OutlineInputBorder(),
+                      hintText: "Input Quantity",
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                      )),
+                ),
+              ),
+        
+              SizedBox(
+                height: 15.0,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: TextField(
+                  controller: batchController,
+                  decoration: InputDecoration(
+                      label: Text("Batch"),
+                      border: OutlineInputBorder(),
+                      hintText: "Input Batch",
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                      )),
+                ),
+              ),
+        
+              SizedBox(
+                height: 15.0,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                      onPressed: () {
+                        Map<String, dynamic> data = {
+                          "serial_number": qr_code,
+                          "rfid_tag": epc_tag,
+                          "item_name": itemNameController.text,
+                          "price": int.parse(priceController.text),
+                          "quantity": int.parse(quantityController.text),
+                          "batch": int.parse(batchController.text)
+                        };
+                        sendData(url, data);
+                        clearController();
+                        
+                        setState(() {
+                          epc_tag = '';
+                          qr_code = '';
+                        });
 
-            SizedBox(
-              height: 15.0,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                    onPressed: () {
-                      Map<String, dynamic> data = {
-                        "serial_number": qr_code,
-                        "rfid_tag": epc_tag,
-                        "item_name": itemNameController.text,
-                        "price": int.parse(priceController.text),
-                      };
-                      sendData(url, data);
-                      clearController();
-                    },
-                    child: Text("Send data"))
-              ],
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-                    onPressed: () {
-                      if (isConnected) {
-                        mode = !mode;
-                        sendMessageCondition(mode);
-                        print(mode);
-                      }
-                    },
-                    child: Text("Change Mode")
-            ),
-            Text(mode ? "RFID Mode" : "QR Mode"),
-          ],
+                      },
+                      child: Text("Send data"))
+                ],
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                      onPressed: () {
+                        if (isConnected) {
+                          mode = !mode;
+                          sendMessageCondition(mode);
+                          print(mode);
+                        }
+                      },
+                      child: Text("Change Mode")
+              ),
+              Text(mode ? "RFID Mode" : "QR Mode"),
+            ],
+          ),
         ),
       ),
     );
@@ -202,10 +249,13 @@ class _ChatPage extends State<ChatPage> {
     serialNumberController.clear();
     itemNameController.clear();
     priceController.clear();
+    quantityController.clear();
+    batchController.clear();
   }
 
   Future<void> sendData(String url, Map<String, dynamic> data) async {
     try {
+
       // Convert the data map to a JSON string
       String jsonData = jsonEncode(data);
       print(jsonData);
@@ -222,10 +272,29 @@ class _ChatPage extends State<ChatPage> {
       // Check the response status code
       if (response.statusCode >= 200 && response.statusCode <= 299) {
         print('Request successful');
-
         print('Response body: ${response.body}');
+
+        Fluttertoast.showToast(
+          msg: "Data sent successfully!",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
       } else {
         print('Request failed with status: ${response.statusCode}');
+
+        Fluttertoast.showToast(
+          msg: "Error ${response.statusCode} : ${response.body}",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
       }
     } catch (e) {
       print('Error occurred: $e');
@@ -323,5 +392,3 @@ class _ChatPage extends State<ChatPage> {
   }
 }
 
-
-// TEST COMMENT
