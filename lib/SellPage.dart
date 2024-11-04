@@ -133,12 +133,39 @@ class _SellpageState extends State<Sellpage> {
 
             ElevatedButton(
               onPressed: () {
-                Map<String, dynamic> data = {
-                  "item_tags": Tags.toList(),
-                  "invoice": invoiceController.text,
-                  "ol_shop": olShopController.text,
-                };
-                sendData(url_bulk, data);
+
+                if (Tags.isEmpty || invoiceController.text.isEmpty || olShopController.text.isEmpty) {
+                          Fluttertoast.showToast(
+                            msg: "Client Error: All fields must be filled.",
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM,
+                            timeInSecForIosWeb: 1,
+                            backgroundColor: Colors.red,
+                            textColor: Colors.white,
+                            fontSize: 16.0,
+                          );
+                          return;
+                        }
+
+                try {
+                  Map<String, dynamic> data = {
+                    "item_tags": Tags.toList(),
+                    "invoice": invoiceController.text,
+                    "ol_shop": olShopController.text,
+                  };
+                  sendData(url_bulk, data);
+                } catch(error) {
+                  Fluttertoast.showToast(
+                    msg: "Client Error: Invalid data or data type",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    fontSize: 16.0,
+                  );
+                }
+
                 clearController();
                 Tags.clear();
               },

@@ -204,24 +204,51 @@ class _ChatPage extends State<ChatPage> {
                 children: [
                   ElevatedButton(
                       onPressed: () {
-                        Map<String, dynamic> data = {
-                          "serial_number": qr_code,
-                          "rfid_tag": epc_tag,
-                          "item_name": itemNameController.text,
-                          "price": int.parse(priceController.text),
-                          "quantity": int.parse(quantityController.text),
-                          "batch": int.parse(batchController.text)
-                        };
-                        sendData(url, data);
+
+                        if (qr_code.isEmpty || epc_tag.isEmpty || itemNameController.text.isEmpty || priceController.text.isEmpty || quantityController.text.isEmpty || batchController.text.isEmpty) {
+                          Fluttertoast.showToast(
+                            msg: "Client Error: All fields must be filled.",
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM,
+                            timeInSecForIosWeb: 1,
+                            backgroundColor: Colors.red,
+                            textColor: Colors.white,
+                            fontSize: 16.0,
+                          );
+                          return;
+                        }
+
+                        try {
+                          Map<String, dynamic> data = {
+                            "serial_number": qr_code,
+                            "rfid_tag": epc_tag,
+                            "item_name": itemNameController.text,
+                            "price": int.parse(priceController.text),
+                            "quantity": int.parse(quantityController.text),
+                            "batch": int.parse(batchController.text)
+                          };
+                          sendData(url, data);
+                        } catch(error) {
+                          Fluttertoast.showToast(
+                            msg: "Client Error: Invalid data or data type",
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM,
+                            timeInSecForIosWeb: 1,
+                            backgroundColor: Colors.red,
+                            textColor: Colors.white,
+                            fontSize: 16.0,
+                          );
+                        }
+
                         clearController();
-                        
                         setState(() {
                           epc_tag = '';
                           qr_code = '';
                         });
 
                       },
-                      child: Text("Send data"))
+                      child: Text("Send data")
+                    ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -287,7 +314,7 @@ class _ChatPage extends State<ChatPage> {
         print('Request failed with status: ${response.statusCode}');
 
         Fluttertoast.showToast(
-          msg: "Error ${response.statusCode} : ${response.body}",
+          msg: "API Error ${response.statusCode} : ${response.body}",
           toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
           timeInSecForIosWeb: 1,
