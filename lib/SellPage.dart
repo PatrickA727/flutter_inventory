@@ -24,6 +24,7 @@ class _SellpageState extends State<Sellpage> {
   String part1 = "";
 
   Set<String> Tags = {};
+  Map<String, dynamic> TagData = {};
 
   final TextEditingController textEditingController = new TextEditingController();
 
@@ -36,8 +37,8 @@ class _SellpageState extends State<Sellpage> {
   final invoiceController = TextEditingController();
   final olShopController = TextEditingController();
 
-  String url_single = 'http://192.168.88.54:5000/api/item/item-sold/';
-  String url_bulk = 'http://192.168.88.58:5000/api/item/item-sold-bulk';
+  String url_single = 'http://192.168.88.71:5000/api/item/item-sold/';
+  String url_bulk = 'http://192.168.88.71:5000/api/item/item-sold-bulk';
 
   @override
   void initState() {
@@ -91,111 +92,146 @@ class _SellpageState extends State<Sellpage> {
               : isConnected
                   ? Text('Connected with ' + serverName)
                   : Text('Disconnected with ' + serverName))),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text("Received RFID EPC:"),
-          Text("$msg\n"),
-          
-          SizedBox(height: 10),
-
-          Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: TextField(
-                controller: invoiceController,
-                decoration: InputDecoration(
-                    label: Text("Item Invoice"),
-                    border: OutlineInputBorder(),
-                    hintText: "Enter Invoice",
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
-                    )),
-              ),
-            ),
-
-            SizedBox(height: 10),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: TextField(
-                controller: olShopController,
-                decoration: InputDecoration(
-                    label: Text("Online Shop"),
-                    border: OutlineInputBorder(),
-                    hintText: "Enter Shop",
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
-                    )),
-              ),
-            ),
-
-            SizedBox(height: 10),
-
-            ElevatedButton(
-              onPressed: () {
-
-                if (Tags.isEmpty || invoiceController.text.isEmpty || olShopController.text.isEmpty) {
-                          Fluttertoast.showToast(
-                            msg: "Client Error: All fields must be filled.",
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.BOTTOM,
-                            timeInSecForIosWeb: 1,
-                            backgroundColor: Colors.red,
-                            textColor: Colors.white,
-                            fontSize: 16.0,
-                          );
-                          return;
-                        }
-
-                try {
-                  Map<String, dynamic> data = {
-                    "item_tags": Tags.toList(),
-                    "invoice": invoiceController.text,
-                    "ol_shop": olShopController.text,
-                  };
-                  sendData(url_bulk, data);
-                } catch(error) {
-                  Fluttertoast.showToast(
-                    msg: "Client Error: Invalid data or data type",
-                    toastLength: Toast.LENGTH_SHORT,
-                    gravity: ToastGravity.BOTTOM,
-                    timeInSecForIosWeb: 1,
-                    backgroundColor: Colors.red,
-                    textColor: Colors.white,
-                    fontSize: 16.0,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text("Received RFID EPC:"),
+        
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: Tags.length, // or null for an infinite list
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    minVerticalPadding: 0,
+                    minTileHeight: 30,
+                    title: Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          // getItemByRFID(Tags.toList()[index]);
+                        },
+                        child: Text(
+                          "${TagData[Tags.toList()[index]]['serial_number']} - ${TagData[Tags.toList()[index]]['item_name']}",
+                          style: TextStyle(
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                    trailing: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          Tags.remove(Tags.toList()[index]);
+                        });
+                      },
+                      child: Icon(Icons.delete), // Your trailing icon
+                    ),
                   );
-                }
-
-                clearController();
-                Tags.clear();
-              },
-              child: Text("Send data")
-            ),
-
-            const SizedBox(height: 10),
-
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
+                },
+              ),
+            
+            SizedBox(height: 10),
+        
+        
+        
+            Padding(
+                padding: const EdgeInsets.only(left: 10, right: 10),
+                child: TextField(
+                  controller: invoiceController,
+                  decoration: InputDecoration(
+                      label: Text("Item Invoice"),
+                      border: OutlineInputBorder(),
+                      hintText: "Enter Invoice",
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                      )),
+                ),
+              ),
+        
+              SizedBox(height: 10),
+        
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: TextField(
+                  controller: olShopController,
+                  decoration: InputDecoration(
+                      label: Text("Online Shop"),
+                      border: OutlineInputBorder(),
+                      hintText: "Enter Shop",
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                      )),
+                ),
+              ),
+        
+              SizedBox(height: 10),
+        
+              ElevatedButton(
+                onPressed: () {
+        
+                  if (Tags.isEmpty || invoiceController.text.isEmpty || olShopController.text.isEmpty) {
+                            Fluttertoast.showToast(
+                              msg: "Client Error: All fields must be filled.",
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.BOTTOM,
+                              timeInSecForIosWeb: 1,
+                              backgroundColor: Colors.red,
+                              textColor: Colors.white,
+                              fontSize: 16.0,
+                            );
+                            return;
+                          }
+        
+                  try {
+                    Map<String, dynamic> data = {
+                      "item_tags": Tags.toList(),
+                      "invoice": invoiceController.text,
+                      "ol_shop": olShopController.text,
+                    };
+                    sendData(url_bulk, data);
+                  } catch(error) {
+                    Fluttertoast.showToast(
+                      msg: "Client Error: Invalid data or data type",
+                      toastLength: Toast.LENGTH_SHORT,
+                      gravity: ToastGravity.BOTTOM,
+                      timeInSecForIosWeb: 1,
+                      backgroundColor: Colors.red,
+                      textColor: Colors.white,
+                      fontSize: 16.0,
+                    );
+                  }
+        
+                  clearController();
                   Tags.clear();
-                  msg = '';
-                });
-              },
-              child: Text("Clear RFID Data")
-            ),
-            // const SizedBox(height: 10),
-            // ElevatedButton(
-            //         onPressed: () {
-            //           if (isConnected) {
-            //             mode = !mode;
-            //             sendMessageCondition(mode);
-            //             print(mode);
-            //           }
-            //         },
-            //         child: Text("Change Mode")
-            // ),
-            // Text(mode ? "RFID Mode" : "QR Mode"),
-        ],
+                },
+                child: Text("Send data")
+              ),
+        
+              const SizedBox(height: 10),
+        
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    Tags.clear();
+                    msg = '';
+                  });
+                },
+                child: Text("Clear RFID Data")
+              ),
+              // const SizedBox(height: 10),
+              // ElevatedButton(
+              //         onPressed: () {
+              //           if (isConnected) {
+              //             mode = !mode;
+              //             sendMessageCondition(mode);
+              //             print(mode);
+              //           }
+              //         },
+              //         child: Text("Change Mode")
+              // ),
+              // Text(mode ? "RFID Mode" : "QR Mode"),
+          ],
+        ),
       ),
     );
   }
@@ -205,9 +241,41 @@ class _SellpageState extends State<Sellpage> {
     olShopController.clear();
   }
 
+  Future<void> getItemByRFID(String rfid_tag) async {
+    final String url = 'http://192.168.88.71:5000/api/item/get-item-rfid/${rfid_tag}';
+    // print(url);
+
+    try {
+      final response = await http.get(Uri.parse(url.trim()));
+
+      if (response.statusCode >= 200 && response.statusCode <= 299) {
+        var data = jsonDecode(response.body);
+        Tags.add(rfid_tag);
+        TagData[rfid_tag] = data;
+        print("TAG DATA: ${TagData}");
+        // return data;
+      } else {
+        Fluttertoast.showToast(
+          msg: "TAG: ${rfid_tag} is not registered",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+        // return null;
+      }
+
+    } catch (e) {
+      print("Caught error: ${e}");
+      // return null;
+    }
+  }
+
   Future<void> sendData(String url, Map<String, dynamic> data) async {
-    print("URL: $url");
-    print("DATA: $data");
+    // print("URL: $url");
+    // print("DATA: $data");
     try {
       // Convert the data map to a JSON string
       String jsonData = jsonEncode(data);
@@ -282,7 +350,7 @@ class _SellpageState extends State<Sellpage> {
   }
 
 
-  void _onDataReceived(Uint8List data) {
+  void _onDataReceived(Uint8List data) async {
     int backspacesCounter = 0;
     data.forEach((byte) {
       if (byte == 8 || byte == 127) {
@@ -307,12 +375,15 @@ class _SellpageState extends State<Sellpage> {
 
     String dataString = String.fromCharCodes(buffer).trim();
 
-    if (dataString.length < 37) {
-      Tags.add(dataString);
+    if (dataString.length < 37 && !Tags.contains(dataString)) {
+      await getItemByRFID(dataString);
+      // Tags.add(dataString);
+      // TagData[dataString] = TagDataBuffer;
+      // print("TAG DATA: ${TagData}");
     }
 
-    print(dataString);
-    print("LIST: $Tags");
+    // print(dataString);
+    // print("LIST: $Tags");
     // int index = buffer.indexOf(13);
     if (dataString.isNotEmpty) {
       setState(() {

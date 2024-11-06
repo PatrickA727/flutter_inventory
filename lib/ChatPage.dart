@@ -49,7 +49,7 @@ class _ChatPage extends State<ChatPage> {
   final quantityController = TextEditingController();
   final batchController = TextEditingController();
 
-  String url = 'http://192.168.88.58:5000/api/item/register-item';
+  String url = 'http://192.168.88.71:5000/api/item/register-item';
 
   @override
   void initState() {
