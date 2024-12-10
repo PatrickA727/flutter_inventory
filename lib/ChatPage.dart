@@ -45,11 +45,17 @@ class _ChatPage extends State<ChatPage> {
   String msg = ""; // Declare msg as a class-level variable
   final serialNumberController = TextEditingController();
   final itemNameController = TextEditingController();
-  final priceController = TextEditingController();
+  // final priceController = TextEditingController();
   final quantityController = TextEditingController();
   final batchController = TextEditingController();
 
-  String url = 'http://192.168.88.71:5000/api/item/register-item';
+  String? selectedDropdown;
+
+  String url = 'http://192.168.1.20:5000/api/item/register-item';
+  String type_url = 'http://192.168.1.20:5000/api/item/get-types';
+
+  Map<String, dynamic> dropdownTypes = {};
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -77,7 +83,33 @@ class _ChatPage extends State<ChatPage> {
       print('Cannot connect, exception occurred');
       print(error);
     });
+
+    getItemTypes();
   }
+
+  Future<void> getItemTypes() async {
+      try {
+        final response = await http.get(Uri.parse(type_url));
+
+        if (response.statusCode >= 200 && response.statusCode <= 299) {
+            Map<String, dynamic> data = json.decode(response.body);
+            // print("DATA: ${data}");
+
+            setState(() {
+              dropdownTypes = data;
+              isLoading = false;
+            });
+            print("TYPES: ${dropdownTypes}");
+          } else {
+            print('Error: ${response.statusCode}');
+            setState(() {
+              isLoading = false;
+            });
+          }
+      } catch (e) {
+        print('Exception: ${e}');
+      }
+    }
 
   @override
   void dispose() {
@@ -97,6 +129,11 @@ class _ChatPage extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     final serverName = widget.server.name ?? "Unknown";
+
+    List<Map<String, dynamic>> dropItems = dropdownTypes["types"] != null
+    ? List<Map<String, dynamic>>.from(dropdownTypes["types"])
+    : [];
+
     return Scaffold(
       appBar: AppBar(
           title: (isConnecting
@@ -108,10 +145,6 @@ class _ChatPage extends State<ChatPage> {
         child: SafeArea(
           child: Column(
             children: <Widget>[
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.center,
-              //   children: [Text("received QR: $msg")], // Display the msg variabl
-              // ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -127,22 +160,14 @@ class _ChatPage extends State<ChatPage> {
                   Text("received SN: $qr_code")
                 ], // Display the msg variabl
               ),
-        
               SizedBox(
-                height: 15.0,
+                height: 15,
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: TextField(
-                  controller: itemNameController,
-                  decoration: InputDecoration(
-                      label: Text("Item Name"),
-                      border: OutlineInputBorder(),
-                      hintText: "Input Item Name",
-                      hintStyle: TextStyle(
-                        color: Colors.grey,
-                      )),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Item: ${selectedDropdown ?? 'No item selected'}")
+                ], // Display the msg variabl
               ),
         
               SizedBox(
@@ -150,20 +175,44 @@ class _ChatPage extends State<ChatPage> {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: TextField(
-                  controller: priceController,
-                  decoration: InputDecoration(
-                      label: Text("Price"),
-                      border: OutlineInputBorder(),
-                      hintText: "Input Price",
-                      hintStyle: TextStyle(
-                        color: Colors.grey,
-                      )),
-                ),
+                child: isLoading ? Center(child: CircularProgressIndicator()) : DropdownButton<String>(
+                    value: selectedDropdown,
+                    hint: Text("Select an Item"),
+                    isExpanded: true,
+                    items: dropItems.map<DropdownMenuItem<String>>((dropItem) {
+                      return DropdownMenuItem<String>(
+                        value: dropItem['item_type'], 
+                        child: Text(dropItem['item_type']),
+                      );
+                    }).toList(), 
+                    onChanged: (value) {
+                      setState(() {
+                        selectedDropdown = value;
+                      });
+                      print("CHOSEN: ${selectedDropdown}");
+                    },
+                  ),
               ),
         
+              // SizedBox(
+              //   height: 10.0,
+              // ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: 10),
+              //   child: TextField(
+              //     controller: priceController,
+              //     decoration: InputDecoration(
+              //         label: Text("Price"),
+              //         border: OutlineInputBorder(),
+              //         hintText: "Input Price",
+              //         hintStyle: TextStyle(
+              //           color: Colors.grey,
+              //         )),
+              //   ),
+              // ),
+        
               SizedBox(
-                height: 15.0,
+                height: 10.0,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -205,7 +254,7 @@ class _ChatPage extends State<ChatPage> {
                   ElevatedButton(
                       onPressed: () {
 
-                        if (qr_code.isEmpty || epc_tag.isEmpty || itemNameController.text.isEmpty || priceController.text.isEmpty || quantityController.text.isEmpty || batchController.text.isEmpty) {
+                        if (qr_code.isEmpty || epc_tag.isEmpty || itemNameController.text.isEmpty || quantityController.text.isEmpty || batchController.text.isEmpty) {
                           Fluttertoast.showToast(
                             msg: "Client Error: All fields must be filled.",
                             toastLength: Toast.LENGTH_SHORT,
@@ -222,8 +271,8 @@ class _ChatPage extends State<ChatPage> {
                           Map<String, dynamic> data = {
                             "serial_number": qr_code,
                             "rfid_tag": epc_tag,
-                            "item_name": itemNameController.text,
-                            "price": int.parse(priceController.text),
+                            "item_name": "buffer",
+                            "type_ref": selectedDropdown,
                             "quantity": int.parse(quantityController.text),
                             "batch": int.parse(batchController.text)
                           };
@@ -275,7 +324,6 @@ class _ChatPage extends State<ChatPage> {
   void clearController() {
     serialNumberController.clear();
     itemNameController.clear();
-    priceController.clear();
     quantityController.clear();
     batchController.clear();
   }
@@ -390,32 +438,6 @@ class _ChatPage extends State<ChatPage> {
         qr_code = dataString.trim();
       });
     }
-
-    // int index = buffer.indexOf(13);
-    // if (~index != 0) {
-    //   setState(() {
-    //     msg = backspacesCounter > 0
-    //         ? _messageBuffer.substring(
-    //             0, _messageBuffer.length - backspacesCounter)
-    //         : _messageBuffer + dataString.substring(0, index);
-    //     _messageBuffer = dataString.substring(index);
-    //     msg = msg.trim();
-    //     List<String> parts = msg.split(',');
-    //     if (parts.length != 2) {
-    //       print("Invalid msg format");
-    //       return;
-    //     }
-
-    //     part1 = parts[0].trim();
-    //     part2 = parts[1].trim();
-    //   });
-    // } else {
-    //   _messageBuffer = (backspacesCounter > 0
-    //       ? _messageBuffer.substring(
-    //           0, _messageBuffer.length - backspacesCounter)
-    //       : _messageBuffer + dataString);
-    // }
-    // print("RECEIVED DATA: $msg");
   }
 }
 
