@@ -51,8 +51,8 @@ class _ChatPage extends State<ChatPage> {
 
   String? selectedDropdown;
 
-  String url = 'http://192.168.1.20:5000/api/item/register-item';
-  String type_url = 'http://192.168.1.20:5000/api/item/get-types';
+  String url = 'http://192.168.1.15:5000/api/item/register-item';
+  String type_url = 'http://192.168.1.15:5000/api/item/get-types';
 
   Map<String, dynamic> dropdownTypes = {};
   bool isLoading = true;
@@ -254,7 +254,7 @@ class _ChatPage extends State<ChatPage> {
                   ElevatedButton(
                       onPressed: () {
 
-                        if (qr_code.isEmpty || epc_tag.isEmpty || itemNameController.text.isEmpty || quantityController.text.isEmpty || batchController.text.isEmpty) {
+                        if (qr_code.isEmpty || epc_tag.isEmpty || quantityController.text.isEmpty || batchController.text.isEmpty) {
                           Fluttertoast.showToast(
                             msg: "Client Error: All fields must be filled.",
                             toastLength: Toast.LENGTH_SHORT,
@@ -378,9 +378,9 @@ class _ChatPage extends State<ChatPage> {
 
   void sendMessageCondition(bool mode) {
     if (mode == true) {
-      _sendMessage("R");
+      _sendMessage("r");
     } else {
-      _sendMessage("Q");
+      _sendMessage("q");
     }
   }
 
@@ -427,7 +427,7 @@ class _ChatPage extends State<ChatPage> {
     }
 
     String dataString = String.fromCharCodes(buffer);
-    print("DATA STRING: $dataString");
+    // print("DATA STRING: $dataString");
 
     if (mode == true) {
       setState(() {

@@ -37,8 +37,8 @@ class _SellpageState extends State<Sellpage> {
   final invoiceController = TextEditingController();
   final olShopController = TextEditingController();
 
-  String url_single = 'http://192.168.88.71:5000/api/item/item-sold/';
-  String url_bulk = 'http://192.168.88.71:5000/api/item/item-sold-bulk';
+  // String url_single = 'https://2876-118-99-106-112.ngrok-free.app/api/item/item-sold/';
+  String url_bulk = 'http://192.168.1.15:5000/api/item/ship-items';
 
   @override
   void initState() {
@@ -130,37 +130,37 @@ class _SellpageState extends State<Sellpage> {
                 },
               ),
             
-            SizedBox(height: 10),
+            // SizedBox(height: 10),
         
-            Padding(
-                padding: const EdgeInsets.only(left: 10, right: 10),
-                child: TextField(
-                  controller: invoiceController,
-                  decoration: InputDecoration(
-                      label: Text("Item Invoice"),
-                      border: OutlineInputBorder(),
-                      hintText: "Enter Invoice",
-                      hintStyle: TextStyle(
-                        color: Colors.grey,
-                      )),
-                ),
-              ),
+            // Padding(
+            //     padding: const EdgeInsets.only(left: 10, right: 10),
+            //     child: TextField(
+            //       controller: invoiceController,
+            //       decoration: InputDecoration(
+            //           label: Text("Item Invoice"),
+            //           border: OutlineInputBorder(),
+            //           hintText: "Enter Invoice",
+            //           hintStyle: TextStyle(
+            //             color: Colors.grey,
+            //           )),
+            //     ),
+            //   ),
         
-              SizedBox(height: 10),
+              // SizedBox(height: 10),
         
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: TextField(
-                  controller: olShopController,
-                  decoration: InputDecoration(
-                      label: Text("Online Shop"),
-                      border: OutlineInputBorder(),
-                      hintText: "Enter Shop",
-                      hintStyle: TextStyle(
-                        color: Colors.grey,
-                      )),
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: 10),
+              //   child: TextField(
+              //     controller: olShopController,
+              //     decoration: InputDecoration(
+              //         label: Text("Online Shop"),
+              //         border: OutlineInputBorder(),
+              //         hintText: "Enter Shop",
+              //         hintStyle: TextStyle(
+              //           color: Colors.grey,
+              //         )),
+              //   ),
+              // ),
         
               SizedBox(height: 10),
         
@@ -202,7 +202,7 @@ class _SellpageState extends State<Sellpage> {
                   clearController();
                   Tags.clear();
                 },
-                child: Text("Send data")
+                child: Text("Ship Item's")
               ),
         
               const SizedBox(height: 10),
@@ -240,7 +240,7 @@ class _SellpageState extends State<Sellpage> {
   }
 
   Future<void> getItemByRFID(String rfid_tag) async {
-    final String url = 'http://192.168.88.71:5000/api/item/get-item-rfid/${rfid_tag}';
+    final String url = 'https://2876-118-99-106-112.ngrok-free.app/api/item/get-item-rfid/${rfid_tag}';
     // print(url);
 
     try {

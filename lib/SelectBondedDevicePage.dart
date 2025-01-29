@@ -143,7 +143,7 @@ class _SelectBondedDevicePage extends State<SelectBondedDevicePage> {
                           return Sellpage(server: _device.device);
                         }));
                       },
-                      child: Text("Sell Page"),
+                      child: Text("Ship Page"),
                     ),
                   ],
                 );
