@@ -5,6 +5,9 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial_ble/flutter_bluetooth_serial_ble.dart';
 import 'package:http/http.dart' as http;
+import 'package:crypto/crypto.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:convert';
 
 class ChatPage extends StatefulWidget {
   final BluetoothDevice server;
@@ -20,6 +23,13 @@ class _Message {
   String text;
 
   _Message(this.whom, this.text);
+}
+
+String generateHmac(String secret, String data) {
+  final key = utf8.encode(secret);          // Convert secret key to bytes
+  final bytes = utf8.encode(data);          // Convert data to bytes
+  final hmac = Hmac(sha256, key);           // Create HMAC-SHA256 instance
+  return hmac.convert(bytes).toString();    // Generate and return the hash
 }
 
 class _ChatPage extends State<ChatPage> {
@@ -51,11 +61,13 @@ class _ChatPage extends State<ChatPage> {
 
   String? selectedDropdown;
 
-  String url = 'http://192.168.1.15:5000/api/item/register-item';
-  String type_url = 'http://192.168.1.15:5000/api/item/get-types';
+  String url = 'http://192.168.111.224:5000/api/item/register-item';
+  String type_url = 'http://192.168.111.224:5000/api/item/get-types';
 
   Map<String, dynamic> dropdownTypes = {};
   bool isLoading = true;
+
+  final secretKey = dotenv.env["SECRET_KEY"] ?? 'Not Found';
 
   @override
   void initState() {
@@ -63,6 +75,7 @@ class _ChatPage extends State<ChatPage> {
     // serialNumberController.addListener(controllerToText);
     BluetoothConnection.toAddress(widget.server.address).then((_connection) {
       print('Connected to the device');
+      
       connection = _connection;
       setState(() {
         isConnecting = false;
@@ -89,7 +102,19 @@ class _ChatPage extends State<ChatPage> {
 
   Future<void> getItemTypes() async {
       try {
-        final response = await http.get(Uri.parse(type_url));
+        final apiUrl = "/api/item/get-types";
+        final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+        final requestSign = timestamp + apiUrl;
+        final signature = generateHmac(secretKey, requestSign);
+
+        final response = await http.get(
+            Uri.parse(type_url),
+            headers: {
+              'Signature': signature,
+              'Timestamp': timestamp,
+              'Content-Type': 'application/json',
+            }
+          );
 
         if (response.statusCode >= 200 && response.statusCode <= 299) {
             Map<String, dynamic> data = json.decode(response.body);
@@ -330,6 +355,10 @@ class _ChatPage extends State<ChatPage> {
 
   Future<void> sendData(String url, Map<String, dynamic> data) async {
     try {
+      final apiUrl = "/api/item/register-item";
+      final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final requestSign = timestamp + apiUrl;
+      final signature = generateHmac(secretKey, requestSign);
 
       // Convert the data map to a JSON string
       String jsonData = jsonEncode(data);
@@ -338,6 +367,8 @@ class _ChatPage extends State<ChatPage> {
       final response = await http.post(
         Uri.parse(url),
         headers: {
+          'Signature': signature,
+          'Timestamp': timestamp,
           'Content-Type': 'application/json',
         },
         body: jsonData,

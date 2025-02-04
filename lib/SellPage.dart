@@ -5,6 +5,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial_ble/flutter_bluetooth_serial_ble.dart';
 import 'package:http/http.dart' as http;
+import 'package:crypto/crypto.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Sellpage extends StatefulWidget {
   final BluetoothDevice server;
@@ -37,8 +39,17 @@ class _SellpageState extends State<Sellpage> {
   final invoiceController = TextEditingController();
   final olShopController = TextEditingController();
 
+  String generateHmac(String secret, String data) {
+    final key = utf8.encode(secret);          // Convert secret key to bytes
+    final bytes = utf8.encode(data);          // Convert data to bytes
+    final hmac = Hmac(sha256, key);           // Create HMAC-SHA256 instance
+    return hmac.convert(bytes).toString();    // Generate and return the hash
+  }
+
+  final secretKey = dotenv.env["SECRET_KEY"] ?? 'Not Found';
+
   // String url_single = 'https://2876-118-99-106-112.ngrok-free.app/api/item/item-sold/';
-  String url_bulk = 'http://192.168.1.15:5000/api/item/ship-items';
+  String url_bulk = 'http://192.168.88.138:5000/api/item/ship-items';
 
   @override
   void initState() {
@@ -111,7 +122,7 @@ class _SellpageState extends State<Sellpage> {
                           // getItemByRFID(Tags.toList()[index]);
                         },
                         child: Text(
-                          "${TagData[Tags.toList()[index]]['serial_number']} - ${TagData[Tags.toList()[index]]['item_name']}",
+                          "${TagData[Tags.toList()[index]]['serial_number']} - ${TagData[Tags.toList()[index]]['type_ref']}",
                           style: TextStyle(
                             fontSize: 13,
                           ),
@@ -167,7 +178,7 @@ class _SellpageState extends State<Sellpage> {
               ElevatedButton(
                 onPressed: () {
         
-                  if (Tags.isEmpty || invoiceController.text.isEmpty || olShopController.text.isEmpty) {
+                  if (Tags.isEmpty) {
                             Fluttertoast.showToast(
                               msg: "Client Error: All fields must be filled.",
                               toastLength: Toast.LENGTH_SHORT,
@@ -181,10 +192,9 @@ class _SellpageState extends State<Sellpage> {
                           }
         
                   try {
+                    print("Tags: ${Tags}");
                     Map<String, dynamic> data = {
                       "item_tags": Tags.toList(),
-                      "invoice": invoiceController.text,
-                      "ol_shop": olShopController.text,
                     };
                     sendData(url_bulk, data);
                   } catch(error) {
@@ -199,8 +209,10 @@ class _SellpageState extends State<Sellpage> {
                     );
                   }
         
-                  clearController();
-                  Tags.clear();
+                  setState(() {
+                    Tags.clear();
+                    msg = '';
+                  });
                 },
                 child: Text("Ship Item's")
               ),
@@ -234,17 +246,23 @@ class _SellpageState extends State<Sellpage> {
     );
   }
 
-  void clearController() {
-    invoiceController.clear();
-    olShopController.clear();
-  }
-
   Future<void> getItemByRFID(String rfid_tag) async {
-    final String url = 'https://2876-118-99-106-112.ngrok-free.app/api/item/get-item-rfid/${rfid_tag}';
+    final String url = 'http://192.168.88.138:5000/api/item/get-sold-by-rfid/${rfid_tag}';
     // print(url);
 
     try {
-      final response = await http.get(Uri.parse(url.trim()));
+      final apiUrl = "/api/item/get-sold-by-rfid/${rfid_tag}";
+      final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final requestSign = timestamp + apiUrl;
+      final signature = generateHmac(secretKey, requestSign);
+
+      final response = await http.get(
+          Uri.parse(url.trim()),
+          headers: {
+            'Signature': signature,
+            'Timestamp': timestamp,
+          }
+        );
 
       if (response.statusCode >= 200 && response.statusCode <= 299) {
         var data = jsonDecode(response.body);
@@ -254,7 +272,7 @@ class _SellpageState extends State<Sellpage> {
         // return data;
       } else {
         Fluttertoast.showToast(
-          msg: "TAG: ${rfid_tag} is not registered",
+          msg: "TAG: ${rfid_tag} is not sold",
           toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
           timeInSecForIosWeb: 1,
@@ -272,16 +290,21 @@ class _SellpageState extends State<Sellpage> {
   }
 
   Future<void> sendData(String url, Map<String, dynamic> data) async {
-    // print("URL: $url");
-    // print("DATA: $data");
     try {
+      final apiUrl = "/api/item/ship-items";
+      final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final requestSign = timestamp + apiUrl;
+      final signature = generateHmac(secretKey, requestSign);
+
       // Convert the data map to a JSON string
       String jsonData = jsonEncode(data);
-      print(jsonData);
+      print("JSON DATA: ${jsonData}");
       // Send the POST request
-      final response = await http.post(
+      final response = await http.patch(
         Uri.parse(url),
         headers: {
+          'Signature': signature,
+          'Timestamp': timestamp,
           'Content-Type': 'application/json',
         },
         body: jsonData,
